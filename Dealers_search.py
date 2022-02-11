@@ -62,6 +62,7 @@ def get_item_name():
         prods_of = []
         urls_of = []
         phone_of = []
+        inn_of = []
         for contracts in response.json()['contracts']['data']:
             # prg_bar.step(10)
 
@@ -87,7 +88,8 @@ def get_item_name():
             # print(contract_url)
             soup = BeautifulSoup(response_2.text, 'html.parser')
             phone_email = soup.select("body > div > div > table:nth-last-of-type(4) > tr:nth-child(4)")
-
+            inn = str(re.findall(r'\d{10,12}', str(soup.select("body > div > div > table:nth-last-of-type(4) > tr:nth-child(4) > td:nth-child(9)")))).replace('[\'', '').replace('\']', '')
+            print(soup.select("body > div > div > table:nth-last-of-type(4) > tr:nth-child(4) > td:nth-child(9)"))
             soup = BeautifulSoup(str(phone_email), 'html.parser')
             # print(contract_url)
             phone_email = str(soup.find_all('td')[11].get_text()).split(' ')
@@ -97,6 +99,7 @@ def get_item_name():
             urls_of.append(contract_url)
             emails_of.append(email)
             phone_of.append(phone)
+            inn_of.append(inn)
             products_list = []
             for itera, products in enumerate(contracts['products']):
                 products_list.append(products['name'])
@@ -107,7 +110,7 @@ def get_item_name():
 
         names_of_fin = [elem.replace('ОБЩЕСТВО С ОГРАНИЧЕННОЙ ОТВЕТСТВЕННОСТЬЮ', 'ООО').replace('Общество с ограниченной ответственностью', 'ООО').replace('ЗАКРЫТОЕ АКЦИОНЕРНОЕ ОБЩЕСТВО', 'ЗАО') for elem in names_of]
 
-        all_info.append(list(zip(names_of_fin,emails_of,phone_of, prods_of))) #, down_space
+        all_info.append(list(zip(names_of_fin,emails_of,phone_of, prods_of, inn_of))) #, down_space
         # print(all_info)
         [tree.insert('', 'end', values=row) for row in all_info[0]]
         # pretty_view = pformat(all_info).replace('[', '').replace(']', '').replace('\'', '').replace(',', '').replace('(', '').replace(')', '')
@@ -130,6 +133,42 @@ def copy_mail():
 
 def selected_row_mail():
     return tree.set(tree.selection(), '#2')
+
+def selected_row_inn():
+    return tree.set(tree.selection(), '#5')
+
+def form_adress():
+    try:
+        payloads_ = {'query': f'{selected_row_inn()}'}
+
+        headers = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64)'
+                                 ' AppleWebKit/537.36 (KHTML, like Gecko) '
+                                 'Chrome/51.0.2704.103 Safari/537.36',
+                   'Accept': 'application/json, text/javascript, */*; q=0.01',
+                   'Content-Type': 'application/x-www-form-urlencoded',
+                   }
+        response = requests.post(f"https://egrul.nalog.ru/",
+                                 data=payloads_, headers=headers)
+        id = response.json()['t']
+
+        response = requests.get(f"https://egrul.nalog.ru/search-result/{id}",
+                                headers=headers)
+
+        adress = response.json()['rows'][0]['a']
+        short_name = response.json()['rows'][0]['c']
+        kpp = response.json()['rows'][0]['p']
+        administrator = response.json()['rows'][0]['g']
+        ogrn = response.json()['rows'][0]['o']
+        all_info = f'Руководителю организации\n' \
+                   f'{short_name}\n\n' \
+                   f'{administrator}\n\n' \
+                   f'{adress}\n\n' \
+                   f'ОГРН:{ogrn}\nИНН:{selected_row_inn()}\nКПП:{kpp}\n\n' \
+                   f'Эл. почта:{selected_row_mail()}'
+        pyperclip.copy(all_info)
+    except:
+        messagebox.showerror('Ошибка', 'Возможно проблемма в ИП или не выбрана организация')
+
 
 window = Tk()
 window.geometry('620x540')
@@ -164,18 +203,20 @@ btn_search = Button(window, text='Поиск', command=get_item_name, bd = 3, bg
 btn_search.pack()
 
 
-tree = ttk.Treeview(columns=('organization', 'email', 'phone', 'items'), height=15, show='headings')
+tree = ttk.Treeview(columns=('organization', 'email', 'phone', 'items', 'inn'), height=15, show='headings')
 
 
 tree.column('organization', width=200)  # , stretch="no"
 tree.column('email', width=100)
 tree.column('phone', width=100)
-tree.column('items', width=300)
+tree.column('items', width=100)
+tree.column('inn', width=100)
 
 tree.heading('organization', text='Организация')
 tree.heading('email', text='Почта')
 tree.heading('phone', text='Телефон')
 tree.heading('items', text='Объект закупки')
+tree.heading('inn', text='ИНН')
 
 tree.pack()
 
@@ -184,6 +225,9 @@ btn_copy_org.pack(side=tkinter.LEFT) #side=tkinter.LEFT
 
 btn_copy_mail = Button(window, text='Копировать почту в буфер', command=copy_mail, bd=5)
 btn_copy_mail.pack(side=tkinter.LEFT) #side=tkinter.LEFT
+
+btn_form_adress = Button(window, text='Сформировать адресата в буфер', command=form_adress, bd=5)
+btn_form_adress.pack(side=tkinter.LEFT)
 
 window.iconphoto(True, tkinter.PhotoImage(data=icon))
 window.mainloop()

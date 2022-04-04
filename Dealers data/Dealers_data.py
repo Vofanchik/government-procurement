@@ -178,8 +178,7 @@ import tkinter as tk
 from tkinter import ttk
 import sqlite3
 import pyperclip
-import os
-import base64
+
 
 
 class Main(tk.Frame):

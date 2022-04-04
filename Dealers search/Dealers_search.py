@@ -35,6 +35,7 @@ from tkinter import messagebox
 import pyperclip
 import requests
 from bs4 import BeautifulSoup
+import re
 
 
 def get_item_name():

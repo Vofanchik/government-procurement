@@ -94,7 +94,8 @@ def get_item_name():
             soup = BeautifulSoup(str(phone_email), 'html.parser')
             # print(contract_url)
             phone_email = str(soup.find_all('td')[11].get_text()).split(' ')
-            phone_email = list(filter(lambda a: a != '', phone_email))
+            # phone_email = list(filter(lambda a: a != '', phone_email))
+            phone_email = []
             phone = phone_email[0]
             email = phone_email[-1]
             urls_of.append(contract_url)

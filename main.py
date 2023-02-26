@@ -3,8 +3,8 @@ from pprint import pprint
 
 import requests
 import sys
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QApplication, QTableWidgetItem
+from PyQt6 import QtWidgets
+from PyQt6.QtWidgets import QApplication, QTableWidgetItem
 
 from UI_files.MainWindow import Ui_MainWindow
 from UI_files.FilesContentDialogue import Ui_Dialog
@@ -12,8 +12,9 @@ from UI_files.FilesContentDialogue import Ui_Dialog
 def api_request(customerregion=66, perpage=1, productsearch=None):
     payloads_ = {f'customerregion': customerregion, 'perpage': perpage,
                  'currentstage': 'EC', 'sort': '-signDate', 'fz': 44}
+    headers = {'User-Agent': 'Mozilla/5.0'}
     response = requests.get(f"http://openapi.clearspending.ru/restapi/v3/contracts/search/?productsearch={productsearch}",
-                            params=payloads_)
+                            params=payloads_, headers=headers)
     l = list(response.json()['contracts']['data'])
 
     return l
@@ -108,8 +109,10 @@ class MainWindow(QtWidgets.QMainWindow):
 
         fcd.show()
 
-app = QApplication(sys.argv)
-ex = MainWindow()
-fcd = FilesContentDialogue()
-ex.show()
-sys.exit(app.exec_())
+if __name__=='__main__':
+
+    app = QApplication(sys.argv)
+    ex = MainWindow()
+    fcd = FilesContentDialogue()
+    ex.show()
+    sys.exit(app.exec())

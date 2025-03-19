@@ -1,0 +1,5 @@
+pyperclip
+bs4
+requests
+PyQt5
+docx
